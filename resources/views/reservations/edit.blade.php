@@ -1,0 +1,21 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header"><h4 class="mb-0">Edit Reservation</h4></div>
+            <div class="card-body">
+                <form action="{{ route('reservations.update', $reservation->id) }}" method="POST">
+                    @csrf @method('PUT')
+                    @include('reservations._fields')
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a href="{{ route('reservations.index') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
