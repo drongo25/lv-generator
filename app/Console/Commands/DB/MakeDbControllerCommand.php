@@ -1,10 +1,10 @@
 <?php
-
 // ============================================================
 // app/Console/Commands/DB/MakeDbControllerCommand.php
-// Добавлена запись маршрутов в routes/web.php
+// Исправления:
+//   1. update() — исправлен порядок параметров ($request, $id)
+//   2. create()  — передаёт new Model() чтобы _fields мог использовать $model->field
 // ============================================================
-
 namespace App\Console\Commands\DB;
 
 use Illuminate\Support\Str;
@@ -17,7 +17,6 @@ class MakeDbControllerCommand extends BaseDbCommand
     protected function generate(string $table, string $connection): void
     {
         $modelName = $this->modelName($table);
-        $controllerName = $modelName . 'Controller';
         $ctrlNs = config('laravel_generator.namespace.controller', 'App\Http\Controllers');
         $modelNs = config('laravel_generator.namespace.model', 'App\Models');
         $reqNs = config('laravel_generator.namespace.request', 'App\Http\Requests');
@@ -37,7 +36,7 @@ use {$reqNs}\\Update{$modelName}Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class {$controllerName} extends Controller
+class {$modelName}Controller extends Controller
 {
     public function index(Request \$request)
     {
@@ -47,7 +46,9 @@ class {$controllerName} extends Controller
 
     public function create()
     {
-        return view('{$snake}.create');
+        // FIX: передаём пустую модель — _fields использует \${$camel}->field ?? ''
+        \${$camel} = new {$modelName}();
+        return view('{$snake}.create', compact('{$camel}'));
     }
 
     public function store(Create{$modelName}Request \$request)
@@ -69,7 +70,8 @@ class {$controllerName} extends Controller
         return view('{$snake}.edit', compact('{$camel}'));
     }
 
-    public function update(\$id, Update{$modelName}Request \$request)
+    // FIX: исправлен порядок параметров — Request всегда первым
+    public function update(Update{$modelName}Request \$request, \$id)
     {
         \${$camel} = {$modelName}::findOrFail(\$id);
         \${$camel}->update(\$request->validated());
@@ -86,21 +88,16 @@ class {$controllerName} extends Controller
 }
 PHP;
 
-        $path = app_path("Http/Controllers/{$controllerName}.php");
+        $path = app_path("Http/Controllers/{$modelName}Controller.php");
         $this->writeFile($path, $stub, (bool)$this->option('force'));
 
         $this->generateFormRequests($modelName, $reqNs, $modelNs);
-        $this->appendRoute($table, $controllerName, $ctrlNs, $routeBase);
+        $this->appendRoute($table, "{$modelName}Controller", $ctrlNs, $routeBase);
     }
 
-    // ── routes/web.php ──────────────────────────────────────────────
+    // ── routes/web.php ───────────────────────────────────────────────
 
-    private function appendRoute(
-        string $table,
-        string $controllerName,
-        string $ctrlNs,
-        string $routeBase
-    ): void
+    private function appendRoute(string $table, string $controllerName, string $ctrlNs, string $routeBase): void
     {
         $routesFile = base_path('routes/web.php');
 
@@ -117,8 +114,7 @@ PHP;
             return;
         }
 
-        $block = "\n// {$table}\n{$routeLine}\n";
-        file_put_contents($routesFile, $contents . $block);
+        file_put_contents($routesFile, $contents . "\n// {$table}\n{$routeLine}\n");
         $this->line("  <fg=green>✔ Маршрут добавлен в routes/web.php:</> {$routeLine}");
     }
 
