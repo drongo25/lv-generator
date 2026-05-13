@@ -7,22 +7,9 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    {{-- Vite собирает и версионирует файлы автоматически --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <style>
-        .sidebar {
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        @media (min-width: 768px) {
-            .sidebar {
-                position: sticky;
-                top: 0;
-            }
-        }
-    </style>
     @stack('styles')
 </head>
 <body>
@@ -64,10 +51,6 @@
 
         </div>
     </div>
-
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     @stack('scripts')
 </body>
 </html>
